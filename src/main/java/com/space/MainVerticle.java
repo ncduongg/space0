@@ -69,7 +69,7 @@ public class MainVerticle extends AbstractVerticle {
 
       // API Public
       /* Category */
-      router.get("/api/public/categories").produces("application/json")
+      router.get("/api/public/categories").produces("application/json").handler(AuthHandler::verifyAuth)
           .handler(PublicHandler::getListCategory);
       router.get("/api/public/category/:id").produces("application/json")
           .handler(PublicHandler::getCategory);

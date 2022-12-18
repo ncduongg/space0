@@ -1,10 +1,8 @@
 package com.space.handler;
 
 import java.util.logging.Logger;
-import io.vertx.core.http.Cookie;
+
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.JWTOptions;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.RoutingContext;
 
 public class ServiceHandler {

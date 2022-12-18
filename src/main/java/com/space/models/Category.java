@@ -2,7 +2,6 @@ package com.space.models;
 
 import java.util.Date;
 
-import io.swagger.v3.core.util.Json;
 import io.vertx.core.json.JsonObject;
 
 public class Category {

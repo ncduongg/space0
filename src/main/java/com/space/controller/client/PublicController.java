@@ -6,17 +6,17 @@ import java.util.logging.Logger;
 
 import com.space.connector.dbClient.DB;
 import com.space.models.Category;
-import com.space.models.ModelsMapping.CategoryMap;
+import com.space.util.Util;
 
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import com.space.util.*;
 
 public class PublicController {
     private static final Logger logger = Logger.getLogger(PublicController.class.getName());
 
+    // Get ALL Category
     public void gCategory(RoutingContext rc) throws Exception {
         Promise<List<Category>> p = Promise.promise();
         try {

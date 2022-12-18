@@ -5,7 +5,6 @@ import com.space.connector.dbClient.DBConnector;
 
 import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.SqlClient;
 
 public class Main {
   public static void main(String[] args) {

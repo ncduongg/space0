@@ -1,17 +1,13 @@
 package com.space.models.ModelsMapping;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.space.models.Category;
 import com.space.util.Util;
 
-import io.vertx.sqlclient.RowSet;
-import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 
 public class CategoryMap {
 

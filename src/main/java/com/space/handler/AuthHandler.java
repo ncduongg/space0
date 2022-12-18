@@ -15,7 +15,7 @@ public class AuthHandler {
   private static final Logger logger = Logger.getLogger(AuthHandler.class.getName());
 
   public static void verifyAuth(RoutingContext rc) {
-    String token = rc.request().getHeader("Authorizaton");
+    String token = rc.request().getHeader("Authorization");
     JsonObject jResponse = new JsonObject();
     if (token == null || token.isBlank()) {
       jResponse.put("response_code", "002")
