@@ -1,36 +1,26 @@
 package com.space.util;
 
-import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.space.MainVerticle;
-
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import static io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_JSON;
 
 public class Util {
     private static final Logger logger = Logger.getLogger(Util.class.getName());
-    private static final DateFormat yyyyMMddTHHmmssZ = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+    private static final DateFormat yyyyMMddTHHmmssZ = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss");
     private static final ZoneId defaultZoneId = ZoneId.of("Asia/Ho_Chi_Minh");
     static {
         // rfc1123DateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        yyyyMMddTHHmmssZ.setTimeZone(TimeZone.getTimeZone("UTC"));
+        yyyyMMddTHHmmssZ.setTimeZone(TimeZone.getTimeZone("GMT+7:00"));
     }
 
     public static void sendRespone(RoutingContext rc, int status, Buffer body) {
@@ -38,6 +28,7 @@ public class Util {
     }
 
     public static void sendRespone(RoutingContext rc, int status, JsonObject body) {
+        logger.info("response : " + body);
         rc.response().setStatusCode(
                 status)
                 .putHeader("content-type", "application/json")
@@ -64,8 +55,8 @@ public class Util {
         });
     }
 
-    public static Date getDate(LocalDate date) {
-        return Date.from(date.atStartOfDay(defaultZoneId).toInstant());
+    public static Date getDate(LocalDateTime date) {
+        return Date.from(date.atZone(defaultZoneId).toInstant());
     }
 
     public synchronized static Date iso8601(String s) {
@@ -122,9 +113,17 @@ public class Util {
         JsonObject error = new JsonObject()
                 .put("status", "500")
                 .put("response_code", "999")
-                .put("message", e.getMessage());
+                .put("message", e.getMessage() == null ? "ERROR_SERVER" : e.getMessage());
 
         rc.response().setStatusCode(500).putHeader("Content-Type", "application/json")
                 .end(error.toBuffer());
+    }
+
+    public static String checkNullOrEmpty (String ...values) {
+        String mess = "";
+        for (String v : values) {
+            if(v == null || v.isBlank()) return "Vui lòng gửi đúng các trường";
+        }
+        return mess;
     }
 }

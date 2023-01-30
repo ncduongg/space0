@@ -19,8 +19,8 @@ public class CategoryMap {
             category.setName(row.getString("cate_name"));
             category.setNote(row.getString("cate_note"));
             category.setDes(row.getString("cate_des"));
-            category.setDate(Util.getDate(row.getLocalDate("cate_date")));
-            category.setDateUpdate(Util.getDate(row.getLocalDate("cate_date_update")));
+            category.setDate(Util.getDate(row.getLocalDateTime("cate_date")));
+            category.setDateUpdate(Util.getDate(row.getLocalDateTime("cate_date_update")));
             category.setSub(row.getInteger("cate_sub").toString());
             lCategory.add(category);
         });

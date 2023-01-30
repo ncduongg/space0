@@ -5,7 +5,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.space.models.Category;
+import com.space.models.User;
 import com.space.models.ModelsMapping.CategoryMap;
+import com.space.models.ModelsMapping.UserMap;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -66,8 +68,78 @@ public class DB {
                 });
             }).onFailure(error -> {
                 logger.log(Level.SEVERE, "[ERROR] getConnection : ", error);
+                handler.handle(Future.failedFuture(error));
             });
         } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    public static void pCreateOrUpdateCategory(Category category, Handler<AsyncResult<Boolean>> handler) throws Exception{
+        try {
+            pgPool.getConnection().onSuccess(conn -> {
+                conn.preparedQuery("SELECT * FROM TB_CATEGORY WHERE cate_id = $1")
+                        .execute(Tuple.of(category.getId()))
+                        .onSuccess(ar -> {
+                            if (ar.rowCount() > 0) {
+                                conn.preparedQuery(
+                                    "UPDATE TB_CATEGORY SET cate_name = $1, cate_des = $2, cate_date_update = NOW() WHERE cate_id = $3")
+                                    .execute(Tuple.of(category.getName(), category.getDes(), category.getId()))
+                                    .onSuccess(ar1 ->{
+                                        handler.handle(Future.succeededFuture(true));
+                                    })
+                                    .onFailure(e -> {
+                                        logger.log(Level.SEVERE, "[ERROR] pCreateOrUpdateCategory Count by ID Cate : ", e);
+                                        handler.handle(Future.failedFuture(e));
+                                    }).eventually(res -> conn.close());
+                            }
+                            if (ar.rowCount() == 0) {
+                                conn.preparedQuery(
+                                        "INSERT INTO TB_CATEGORY (cate_id,cate_name,cate_note,cate_des,cate_date,cate_date_update,cate_sub) VALUES ($1,$2,$3,$4,NOW(),NOW(),1)")
+                                        .execute(Tuple.of(category.getId(), category.getName(), category.getNote(),
+                                                category.getDes()))
+                                        .onSuccess(ar1 ->{
+                                            handler.handle(Future.succeededFuture(true));
+                                        })
+                                        .onFailure(e -> {
+                                            logger.log(Level.SEVERE, "[ERROR] pCreateOrUpdateCategory Count by ID Cate : ", e);
+                                            handler.handle(Future.failedFuture(e));
+                                        }).eventually(res -> conn.close());
+                            }
+                        }).onFailure(e -> {
+                            logger.log(Level.SEVERE, "[ERROR] pCreateOrUpdateCategory Count by ID Cate : ", e);
+                            handler.handle(Future.failedFuture(e));
+                        }).eventually(res -> conn.close());
+            }).onFailure(e -> {
+                logger.log(Level.SEVERE, "[ERROR] pCreateOrUpdateCategory get Conn: ", e);
+                handler.handle(Future.failedFuture(e));
+            });
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "[ERROR] pCreateOrUpdateCategory get Conn: ", e);
+            handler.handle(Future.failedFuture(e));
+        }
+    }
+
+    public static void pGetProfile(String username, Handler<AsyncResult<User>> handler) throws Exception {
+        try {
+            pgPool.getConnection().onSuccess(conn -> {
+                conn.preparedQuery("SELECT * FROM TB_USER WHERE username = $1")
+                        .execute(Tuple.of(username))
+                        .onSuccess(ar -> {
+                            User user = UserMap.DbUserMap(ar);
+                            handler.handle(Future.succeededFuture(user));
+                        }).onFailure(error -> {
+                            logger.log(Level.SEVERE, "[ERROR] pGetProfile : ", error);
+                            handler.handle(Future.failedFuture(error));
+                        }).eventually(close -> {
+                            return conn.close();
+                        });
+            }).onFailure(error -> {
+                logger.log(Level.SEVERE, "[ERROR] getConnection : ", error);
+                handler.handle(Future.failedFuture(error));
+            });
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "", e);
             throw e;
         }
     }

@@ -37,6 +37,7 @@ public class AuthController {
                     logger.log(Level.INFO, "verifyAuth : " + bodyRes);
                     String responseCode = bodyRes.getString("response_code");
                     if ("000".equals(responseCode)) {
+                        rc.put("username", bodyRes.getJsonObject("content").getString("username"));
                         rc.next();
                         return;
                     } else {
@@ -60,8 +61,8 @@ public class AuthController {
                     String responseCode = bodyRes.getString("response_code");
                     if (responseCode.equals("000")) {
                         String token = bodyRes.getJsonObject("content").getString("access_token");
-                        Cookie cookie = Cookie.cookie("auth", token);
-                        cookie.setHttpOnly(true).setPath("/").encode();
+                        Cookie cookie = Cookie.cookie("Authorization", token);
+                        cookie.setHttpOnly(true).setPath("/").setMaxAge(60000).encode();
                         rc.response().addCookie(cookie)
                                 .putHeader("content-type", "application/json")
                                 .putHeader("Authorization", token)

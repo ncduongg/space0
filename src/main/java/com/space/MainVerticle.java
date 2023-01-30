@@ -7,8 +7,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.space.handler.AuthHandler;
+import com.space.handler.Privatehandler;
 import com.space.handler.PublicHandler;
 import com.space.handler.ServiceHandler;
+import com.space.handler.UserHandler;
 import com.space.util.Util;
 
 import io.vertx.core.AbstractVerticle;
@@ -53,6 +55,7 @@ public class MainVerticle extends AbstractVerticle {
       allowedHeaders.add("Content-Type");
       allowedHeaders.add("accept");
       allowedHeaders.add("X-PINGARUNER");
+      allowedHeaders.add("Access-Control-Allow-Credentials");
 
       Set<HttpMethod> allowedMethods = new HashSet<>();
       allowedMethods.add(HttpMethod.GET);
@@ -67,17 +70,20 @@ public class MainVerticle extends AbstractVerticle {
       router.route().handler(TimeoutHandler.create(60000));
       router.route().failureHandler(Util::failureResponse);
 
-      // API Public
-      /* Category */
-      router.get("/api/public/categories").produces("application/json").handler(AuthHandler::verifyAuth)
-          .handler(PublicHandler::getListCategory);
+      /* Category Public */
+      router.get("/api/public/categories").produces("application/json")
+          .handler(PublicHandler::getListCategory);// Get Categories
       router.get("/api/public/category/:id").produces("application/json")
-          .handler(PublicHandler::getCategory);
+          .handler(PublicHandler::getCategory); // Get Category by ID
+      /*Category Private*/
+      router.post("/api/private/category").produces("application/json").consumes("application/json").handler(Privatehandler::pCreateOrUpdateCategory); // Create/ Update Category
       /* Author */
-      router.post("/api/public/register").produces("application/json").consumes("application/json")
+      router.post("/api/auth/register").produces("application/json").consumes("application/json")
           .handler(AuthHandler::register);
-      router.post("/api/public/login").produces("application/json").consumes("application/json")
+      router.post("/api/auth/login").produces("application/json").consumes("application/json")
           .handler(AuthHandler::login);
+      /*Get Profile Use*/
+      router.get("/api/user/profile").produces("application/json").handler(AuthHandler::verifyAuth).handler(UserHandler::gGetUserProfile);
 
       // API Private
       router.get("/api/getItems").produces("application/json").handler(ServiceHandler::getListItemHome);

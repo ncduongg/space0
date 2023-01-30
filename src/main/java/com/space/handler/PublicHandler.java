@@ -28,9 +28,7 @@ public class PublicHandler {
         }
     }
 
-    public static void createCategory() {
-
-    }
+ 
 
     public static void getListProduct() {
 
