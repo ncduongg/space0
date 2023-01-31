@@ -1,5 +1,6 @@
 package com.space.controller.client;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,7 +9,9 @@ import com.space.models.Category;
 import static com.space.util.Util.*;
 
 import io.vertx.core.Promise;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
 
 public class PrivateController {
@@ -39,6 +42,29 @@ public class PrivateController {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "", e);
             rc.fail(e);
+        }
+    }
+    public void pUploadFile(RoutingContext rc,FileSystem fileSystem,List<FileUpload> fileUploads) {
+        logger.log(Level.INFO, "===========UPLOAD FILE==========");
+        for (FileUpload fileUpload : fileUploads) {
+            // Doc file vua Upload
+            fileSystem.readFile(fileUpload.uploadedFileName(), handlerReadfile ->{
+                if(handlerReadfile.succeeded()) {
+                    fileSystem.writeFile("public/images/" + System.currentTimeMillis() + fileUpload.fileName(), handlerReadfile.result()).onComplete(handlerWriteFile ->{
+                        if(handlerWriteFile.succeeded()){
+                            sendRespone(rc, 200, new JsonObject());
+                        }
+                        if(handlerWriteFile.failed()){
+                            logger.log(Level.SEVERE, handlerReadfile.cause().getMessage());
+                            rc.fail(handlerWriteFile.cause());
+                        }
+                    });
+                }
+                if(handlerReadfile.failed()){
+                    logger.log(Level.SEVERE, handlerReadfile.cause().getMessage());
+                    rc.fail(handlerReadfile.cause());
+                }
+            });
         }
     }
 }

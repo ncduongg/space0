@@ -27,6 +27,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.ResponseTimeHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.handler.TimeoutHandler;
 
 public class MainVerticle extends AbstractVerticle {
@@ -69,6 +70,12 @@ public class MainVerticle extends AbstractVerticle {
       router.route().handler(ResponseTimeHandler.create());
       router.route().handler(TimeoutHandler.create(60000));
       router.route().failureHandler(Util::failureResponse);
+      /*API FILE*/
+      router.post("/api/file/uploads").handler(BodyHandler.create().setHandleFileUploads(true).setUploadsDirectory("public/images").setDeleteUploadedFilesOnEnd(true));
+      router.get("/api/file/images/*").handler(StaticHandler.create("public/images").setCachingEnabled(false));
+      router.post("/api/file/uploads").handler(Privatehandler::pUploadFile);
+      /*Product Private*/
+      router.post("/api/private/product").produces("application/json").consumes("application/json");
 
       /* Category Public */
       router.get("/api/public/categories").produces("application/json")

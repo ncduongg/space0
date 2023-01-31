@@ -7,10 +7,12 @@ import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgPool;
 
 public class Main {
+  public static FileUpload fileUpload;
   public static void main(String[] args) {
     try {
       Vertx vertx = Vertx.vertx();
       DBConnector sqlConnector = new DBConnector();
+      fileUpload = new FileUpload(vertx.fileSystem());
       PgPool pgPool = sqlConnector.getPool(vertx);
       DB.setPool(pgPool);
       vertx.deployVerticle(MainVerticle.class.getName()).onSuccess(handler -> {

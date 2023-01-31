@@ -59,6 +59,7 @@ public class DB {
                     } else {
                         handler.handle(Future.failedFuture(ar.cause()));
                     }
+                    conn.close();
                 }).onFailure(error -> {
                     handler.handle(Future.failedFuture(error));
                     logger.log(Level.SEVERE, "[ERROR] querry : ", error);
@@ -71,6 +72,7 @@ public class DB {
                 handler.handle(Future.failedFuture(error));
             });
         } catch (Exception e) {
+            logger.log(Level.SEVERE, "[ERROR] getConnection : ", e);
             throw e;
         }
     }
