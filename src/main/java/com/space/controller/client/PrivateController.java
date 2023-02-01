@@ -4,10 +4,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.space.Main;
 import com.space.connector.dbClient.DB;
+import com.space.controller.file.FileUploadController;
 import com.space.models.Category;
 import static com.space.util.Util.*;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
@@ -44,27 +49,53 @@ public class PrivateController {
             rc.fail(e);
         }
     }
-    public void pUploadFile(RoutingContext rc,FileSystem fileSystem,List<FileUpload> fileUploads) {
+
+    public void pUploadFile(RoutingContext rc, FileSystem fileSystem, List<FileUpload> fileUploads) {
         logger.log(Level.INFO, "===========UPLOAD FILE==========");
-        for (FileUpload fileUpload : fileUploads) {
-            // Doc file vua Upload
-            fileSystem.readFile(fileUpload.uploadedFileName(), handlerReadfile ->{
-                if(handlerReadfile.succeeded()) {
-                    fileSystem.writeFile("public/images/" + System.currentTimeMillis() + fileUpload.fileName(), handlerReadfile.result()).onComplete(handlerWriteFile ->{
-                        if(handlerWriteFile.succeeded()){
-                            sendRespone(rc, 200, new JsonObject());
-                        }
-                        if(handlerWriteFile.failed()){
-                            logger.log(Level.SEVERE, handlerReadfile.cause().getMessage());
-                            rc.fail(handlerWriteFile.cause());
-                        }
-                    });
-                }
-                if(handlerReadfile.failed()){
-                    logger.log(Level.SEVERE, handlerReadfile.cause().getMessage());
-                    rc.fail(handlerReadfile.cause());
-                }
-            });
-        }
+        FileUploadController fileUploadC = new FileUploadController();
+        Promise<JsonObject> p = Promise.promise();
+        fileUploadC.pUploadImagesHandler(fileSystem, fileUploads, p);
+        p.future().onComplete(ar -> {
+            if (ar.succeeded()) {
+                JsonObject file = ar.result();
+                JsonObject jRes = new JsonObject()
+                        .put("status", "200")
+                        .put("response_code", "000")
+                        .put("content", file);
+                sendRespone(rc, 200, jRes);
+            }
+            if (ar.failed()) {
+                rc.fail(ar.cause());
+            }
+        });
+    }
+
+    public void pCreateProduct(RoutingContext rc, JsonObject body) {
+        List<FileUpload> filesUploads = rc.fileUploads();
+        FileSystem fileSystem = Main.fileUpload.getFileSystem();
+        FileUploadController fileUploadC = new FileUploadController();
+        fileUploadC.pUploadImagesHandler(fileSystem, filesUploads, handlerUpfile ->{
+            if(handlerUpfile.succeeded()){
+                body.put("file", handlerUpfile.result());
+                DB.pCreateProduct(body, ar ->{
+                    if(ar.succeeded()){
+                        JsonObject jRes = new JsonObject()
+                        .put("response_code", "000")
+                        .put("status", "400")
+                        .put("message", "Tạo mơi thành công sản phẩm  " + body.getString("prod_name"))
+                        .put("content", new JsonObject());
+                        sendRespone(rc, 200, jRes);
+                    }
+                    if(ar.failed()) {
+                        logger.log(Level.SEVERE, "" + ar.cause().getMessage());
+                        rc.fail(ar.cause());
+                    }
+                });
+            }
+            if(handlerUpfile.failed()){
+                logger.log(Level.SEVERE, "" + handlerUpfile.cause().getMessage());
+                rc.fail(handlerUpfile.cause());
+            }
+        });
     }
 }

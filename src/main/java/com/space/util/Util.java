@@ -1,16 +1,23 @@
 package com.space.util;
 
+import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
@@ -113,7 +120,7 @@ public class Util {
         JsonObject error = new JsonObject()
                 .put("status", "500")
                 .put("response_code", "999")
-                .put("message", e.getMessage() == null ? "ERROR_SERVER" : e.getMessage());
+                .put("message", e ==null || e.getMessage() == null ? "ERROR_SERVER" : e.getMessage());
 
         rc.response().setStatusCode(500).putHeader("Content-Type", "application/json")
                 .end(error.toBuffer());
@@ -125,5 +132,44 @@ public class Util {
             if(v == null || v.isBlank()) return "Vui lòng gửi đúng các trường";
         }
         return mess;
+    }
+    public static String idRandom(String typeIdString) {
+        return typeIdString + "-" + Base64.getUrlEncoder().withoutPadding().encodeToString(Util.parseHexBinary(UUID.randomUUID().toString().replaceAll("-", "")));
+    }
+
+    public static MultiMap getRequestParams(RoutingContext rc) {
+        MultiMap params = null;
+        try {
+            HttpServerRequest request = rc.request();
+            MultiMap headers = request.headers();
+            params = request.params();
+            if (request.method() == HttpMethod.POST
+                    && headers.get(HttpHeaders.CONTENT_TYPE).contains("application/x-www-form-urlencoded")) {
+                // params.addAll(request.formAttributes());
+                String rawParams = rc.body().asString();
+                if (rawParams != null && rawParams.length() > 0) {
+                    for (String kv : rawParams.split("&")) {
+                        if (kv != null && kv.contains("=")) {
+                            String[] aryKV = kv.split("=");
+                            if (aryKV.length == 2) {
+                                params.add(URLDecoder.decode(aryKV[0], "UTF-8"), URLDecoder.decode(aryKV[1], "UTF-8"));
+                            } else {
+                                params.add(URLDecoder.decode(aryKV[0], "UTF-8"), "");
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "", e);
+        }
+        return params;
+    }
+    public static JsonObject stringToJsonObject (String jString) {
+        try {
+            return new JsonObject(jString);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

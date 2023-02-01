@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import com.space.controller.client.PublicController;
 
+import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
 
 public class PublicHandler {
@@ -34,7 +35,7 @@ public class PublicHandler {
 
     }
 
-    public static void createProduct() {
-
+    public static void createProduct(RoutingContext rc) {
+        
     }
 }

@@ -2,6 +2,7 @@ package com.space.handler;
 
 import com.space.util.Util;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.FileUpload;
@@ -9,6 +10,7 @@ import io.vertx.ext.web.RoutingContext;
 import static com.space.util.Util.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,26 +55,52 @@ public class Privatehandler {
             List<FileUpload> filesUploads = rc.fileUploads();
             FileSystem fileSystem = Main.fileUpload.getFileSystem();
             JsonObject jRes = new JsonObject()
-                        .put("response_code", "002")
-                        .put("status", "400")
-                       
-                        .put("content", new JsonObject());
+                    .put("response_code", "002")
+                    .put("status", "400")
+
+                    .put("content", new JsonObject());
             if (filesUploads.size() == 0) {
                 jRes.put("message", "Invalid upload file");
                 sendRespone(rc, 200, jRes);
                 return;
             }
             for (FileUpload file : filesUploads) {
-                if(!file.contentType().startsWith("image/")){
+                if (!file.contentType().startsWith("image/")) {
                     jRes.put("message", "Upload Image Only not : " + file.contentType());
                     sendRespone(rc, 200, jRes);
                     return;
                 }
             }
-            pController.pUploadFile(rc,fileSystem, filesUploads);
+            pController.pUploadFile(rc, fileSystem, filesUploads);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "", e);
             rc.fail(e);
         }
+    }
+
+    public static void pCreateProduct(RoutingContext rc) {
+        // JsonObject jReq = rc.body().asJsonObject();
+        try {
+            MultiMap params = rc.request().formAttributes();
+            logger.info("params : " +  params);
+            if (params.size() == 0) {
+                JsonObject jRes = new JsonObject()
+                        .put("response_code", "002")
+                        .put("status", "400")
+                        .put("message", "Invalid params")
+                        .put("content", new JsonObject());
+                sendRespone(rc, 200, jRes);
+                return;
+            }
+            JsonObject jPrams = new JsonObject();
+            for (Map.Entry<String, String> entry : params.entries()) {
+                jPrams.put(entry.getKey(), stringToJsonObject(entry.getValue()) == null ? entry.getValue() : stringToJsonObject(entry.getValue()));
+            }
+            pController.pCreateProduct(rc, jPrams);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "", e);
+            rc.fail(e);
+        }
+
     }
 }
