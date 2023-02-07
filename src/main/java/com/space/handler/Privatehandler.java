@@ -82,7 +82,7 @@ public class Privatehandler {
         // JsonObject jReq = rc.body().asJsonObject();
         try {
             MultiMap params = rc.request().formAttributes();
-            logger.info("params : " +  params);
+            logger.info("params : " + params);
             if (params.size() == 0) {
                 JsonObject jRes = new JsonObject()
                         .put("response_code", "002")
@@ -94,12 +94,41 @@ public class Privatehandler {
             }
             JsonObject jPrams = new JsonObject();
             for (Map.Entry<String, String> entry : params.entries()) {
-                jPrams.put(entry.getKey(), stringToJsonObject(entry.getValue()) == null ? entry.getValue() : stringToJsonObject(entry.getValue()));
+                jPrams.put(entry.getKey(), stringToJsonObject(entry.getValue()) == null ? entry.getValue()
+                        : stringToJsonObject(entry.getValue()));
             }
             pController.pCreateProduct(rc, jPrams);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "", e);
             rc.fail(e);
+        }
+    }
+
+    public static void pCreateDonate(RoutingContext rc) {
+        try {
+            logger.info("=====HANDLER pCreateDonate=====" + rc.body().asJsonObject());
+            JsonObject jReq = rc.body().asJsonObject();
+            String doId = jReq.getString("do_id");
+            String userId = jReq.getString("user_id");
+            double doAmount = Double.parseDouble(jReq.getString("do_amount"));
+            String doState = "create";
+            pController.pCreateDonate(rc, doId, userId, doAmount, "", doState);
+        } catch (Exception e) {
+            rc.fail(e);
+            logger.log(Level.SEVERE, "", e);
+        }
+
+    }
+    public static void pUpdateDonate(RoutingContext rc) {
+        try {
+            JsonObject jReq = rc.body().asJsonObject();
+            String doId = jReq.getString("do_id");
+            String doData = jReq.getString("do_data");
+            String doState = jReq.getString("do_state");
+            pController.pUpdateDonate(rc, doId, doData, doState);
+        } catch (Exception e) {
+            rc.fail(e);
+            logger.log(Level.SEVERE, "", e);
         }
 
     }

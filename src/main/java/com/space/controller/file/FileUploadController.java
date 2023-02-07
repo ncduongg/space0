@@ -32,7 +32,7 @@ public class FileUploadController {
                                     JsonObject result = new JsonObject()
                                                 .put("img_id", imgId)
                                                 .put("img_file_name", fileName)
-                                                .put("img_statle", "active");
+                                                .put("img_state", "active");
                                     fileSystem.delete(fileUpload.uploadedFileName());
                                     handle.handle(Future.succeededFuture(result));
                                 }

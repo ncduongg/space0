@@ -5,8 +5,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.space.models.Category;
+import com.space.models.Product;
 import com.space.models.User;
 import com.space.models.ModelsMapping.CategoryMap;
+import com.space.models.ModelsMapping.ProductMap;
 import com.space.models.ModelsMapping.UserMap;
 
 import io.vertx.core.AsyncResult;
@@ -175,7 +177,19 @@ public class DB {
                                             Double.valueOf(body.getString("prod_amount_dis"))),
                                     handl -> {
                                         if (handl.succeeded()) {
-                                            handler.handle(Future.succeededFuture());
+                                            conn.preparedQuery(
+                                                    "INSERT INTO TB_IMAGES (img_id,img_file_name,img_state) VALUES($1,$2,'active')")
+                                                    .execute(Tuple.of(body.getJsonObject("file").getString("img_id"),
+                                                            body.getJsonObject("file").getString("img_file_name")))
+                                                    .onComplete(ar1 -> {
+                                                        if (ar1.succeeded()) {
+                                                            handler.handle(Future.succeededFuture());
+                                                        }
+                                                        if (ar1.failed()) {
+                                                            logger.log(Level.SEVERE, "", ar1.cause());
+                                                            handler.handle(Future.failedFuture(ar1.cause()));
+                                                        }
+                                                    });
                                         }
                                         if (handl.failed()) {
                                             handler.handle(Future.failedFuture(handl.cause()));
@@ -191,5 +205,159 @@ public class DB {
             logger.log(Level.SEVERE, "", e);
             throw e;
         }
+    }
+
+    public static void gProduct(String category, String key, Handler<AsyncResult<List<Product>>> resultHandler) {
+        logger.info("category : " + category + " key :" + key);
+        pgPool.getConnection().onComplete(con -> {
+            if (con.succeeded()) {
+                SqlConnection connection = con.result();
+                if (!"all".equals(category) && !"".equals(key)) {
+                    connection.preparedQuery(
+                            "SELECT p.*,i.img_file_name as prod_images_name FROM public.tb_product p inner join tb_images i on p.prod_images = img_id WHERE p.cate_id = $1 and lower(p.prod_name) like $2")
+                            .execute(Tuple.of(category, "%" + key + "%"), result -> {
+                                if (result.succeeded()) {
+                                    resultHandler
+                                            .handle(Future.succeededFuture(ProductMap.DBProductMap(result.result())));
+                                    connection.close();
+                                } else {
+                                    resultHandler.handle(Future.failedFuture(result.cause()));
+                                    connection.close();
+                                }
+                            });
+                }
+                if (!"all".equals(category) && "".equals(key)) {
+                    connection.preparedQuery(
+                            "SELECT p.*,i.img_file_name as prod_images_name FROM public.tb_product p inner join tb_images i on p.prod_images = img_id WHERE p.cate_id = $1")
+                            .execute(Tuple.of(category), result -> {
+                                if (result.succeeded()) {
+                                    resultHandler
+                                            .handle(Future.succeededFuture(ProductMap.DBProductMap(result.result())));
+                                    connection.close();
+                                } else {
+                                    resultHandler.handle(Future.failedFuture(result.cause()));
+                                    connection.close();
+                                }
+                            });
+                }
+                if ("all".equals(category) && "".equals(key)) {
+                    connection.preparedQuery(
+                            "SELECT p.*,i.img_file_name as prod_images_name FROM public.tb_product p inner join tb_images i on p.prod_images = img_id")
+                            .execute().onComplete(result -> {
+                                if (result.succeeded()) {
+                                    resultHandler
+                                            .handle(Future.succeededFuture(ProductMap.DBProductMap(result.result())));
+                                    connection.close();
+                                } else {
+                                    resultHandler.handle(Future.failedFuture(result.cause()));
+                                    connection.close();
+                                }
+                            });
+                }
+                if ("all".equals(category) && !"".equals(key)) {
+                    connection.preparedQuery(
+                            "SELECT p.*,i.img_file_name as prod_images_name FROM public.tb_product p inner join tb_images i on p.prod_images = img_id WHERE lower(p.prod_name) like $1 ")
+                            .execute(Tuple.of("%" + key + "%")).onComplete(result -> {
+                                if (result.succeeded()) {
+                                    resultHandler
+                                            .handle(Future.succeededFuture(ProductMap.DBProductMap(result.result())));
+                                    connection.close();
+                                } else {
+                                    resultHandler.handle(Future.failedFuture(result.cause()));
+                                    connection.close();
+                                }
+                            });
+                }
+            } else {
+                resultHandler.handle(Future.failedFuture(con.cause()));
+            }
+        });
+    }
+
+    public static void gProductDetail(String id, Handler<AsyncResult<List<Product>>> resultHandler) {
+        pgPool.getConnection().onComplete(con -> {
+            if (con.succeeded()) {
+                logger.info("id Product : " + id);
+                SqlConnection connection = con.result();
+                connection.preparedQuery(
+                        "SELECT p.*,i.img_file_name as prod_images_name FROM public.tb_product p inner join tb_images i on p.prod_images = img_id WHERE p.prod_id = $1")
+                        .execute(Tuple.of(id), result -> {
+                            if (result.succeeded()) {
+                                resultHandler.handle(Future.succeededFuture(ProductMap.DBProductMap(result.result())));
+                                connection.close();
+                            } else {
+                                resultHandler.handle(Future.failedFuture(result.cause()));
+                                connection.close();
+                            }
+                        });
+            } else {
+                resultHandler.handle(Future.failedFuture(con.cause()));
+            }
+        });
+    }
+
+    public static void pCreateDonate(String do_id, String user_id, double do_amount, String do_data,
+            String do_state,
+            Handler<AsyncResult<Void>> resultHandler) {
+        pgPool.getConnection().onComplete(con -> {
+            if (con.succeeded()) {
+                SqlConnection connection = con.result();
+                connection.preparedQuery(
+                        "INSERT INTO tb_donate (do_id, user_id, do_amount, do_data, do_state) VALUES ($1, $2, $3, $4, $5)")
+                        .execute(Tuple.of(do_id, user_id, do_amount, do_data, do_state), result -> {
+                            if (result.succeeded()) {
+                                resultHandler.handle(Future.succeededFuture());
+                                connection.close();
+                            } else {
+                                resultHandler.handle(Future.failedFuture(result.cause()));
+                                connection.close();
+                            }
+                        });
+            } else {
+                resultHandler.handle(Future.failedFuture(con.cause()));
+            }
+        });
+    }
+
+    public static void pUpdateDonate(String doId, String doData, String doState,
+            Handler<AsyncResult<Void>> resultHandler) {
+        pgPool.getConnection().onComplete(con -> {
+            if (con.succeeded()) {
+                SqlConnection connection = con.result();
+                connection.preparedQuery(
+                        "UPDATE tb_donate SET do_data = $2 WHERE do_state = 'create' and do_id = $1")
+                        .execute(Tuple.of(doId, doData), result -> {
+                            if (result.succeeded()) {
+                                connection.preparedQuery(
+                                        "UPDATE tb_user set amount = (tb_user.amount + d.do_amount) from tb_donate d  where tb_user.user_id = d.user_id and d.do_state = 'create' and d.do_id = $1")
+                                        .execute(Tuple.of(doId), update -> {
+                                            if (update.succeeded()) {
+                                                connection.preparedQuery(
+                                                        "UPDATE tb_donate SET do_state = $2 WHERE do_state = 'create' and do_id = $1")
+                                                        .execute(Tuple.of(doId,doState), updateState -> {
+                                                            if (updateState.succeeded()) {
+                                                                resultHandler.handle(Future.succeededFuture());
+                                                                connection.close();
+                                                            } else {
+                                                                resultHandler.handle(Future.failedFuture(updateState.cause()));
+                                                                connection.close();
+                                                            }
+                                                        });
+
+                                            } else {
+                                                resultHandler.handle(Future.failedFuture(result.cause()));
+                                                connection.close();
+                                            }
+                                        });
+
+                            } else {
+                                resultHandler.handle(Future.failedFuture(result.cause()));
+                                connection.close();
+                            }
+                        });
+            } else {
+                resultHandler.handle(Future.failedFuture(con.cause()));
+            }
+        });
     }
 }

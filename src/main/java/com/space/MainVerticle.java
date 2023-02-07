@@ -73,11 +73,16 @@ public class MainVerticle extends AbstractVerticle {
       /*API FILE*/
       router.post("/api/file/uploads").handler(BodyHandler.create().setHandleFileUploads(true).setUploadsDirectory("public/images").setDeleteUploadedFilesOnEnd(true));
       router.post("/api/private/product").handler(BodyHandler.create().setHandleFileUploads(true).setUploadsDirectory("public/images").setDeleteUploadedFilesOnEnd(true));
-      router.get("/api/file/images/*").handler(StaticHandler.create("public/images").setCachingEnabled(false));
+      router.get("/api/file/images/*").handler(StaticHandler.create("public").setCachingEnabled(false));
       router.post("/api/file/uploads").handler(Privatehandler::pUploadFile);
+      /*Donate Private*/
+      router.post("/api/private/donate").produces("application/json").handler(Privatehandler::pCreateDonate);
+      router.put("/api/private/donate").produces("application/json").handler(Privatehandler::pUpdateDonate);
       /*Product Private*/
       router.post("/api/private/product").produces("multipart/form-data").handler(Privatehandler::pCreateProduct);
-
+      /*Product Public*/
+      router.get("/api/public/products").produces("application/json").handler(PublicHandler::gProduct);
+      router.get("/api/public/product/:id").produces("application/json").handler(PublicHandler::gProductDetail);
       /* Category Public */
       router.get("/api/public/categories").produces("application/json")
           .handler(PublicHandler::getListCategory);// Get Categories

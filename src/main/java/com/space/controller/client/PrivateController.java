@@ -8,6 +8,8 @@ import com.space.Main;
 import com.space.connector.dbClient.DB;
 import com.space.controller.file.FileUploadController;
 import com.space.models.Category;
+import com.space.util.Util;
+
 import static com.space.util.Util.*;
 
 import io.vertx.core.AsyncResult;
@@ -15,6 +17,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.file.FileSystem;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.RoutingContext;
@@ -74,27 +77,61 @@ public class PrivateController {
         List<FileUpload> filesUploads = rc.fileUploads();
         FileSystem fileSystem = Main.fileUpload.getFileSystem();
         FileUploadController fileUploadC = new FileUploadController();
-        fileUploadC.pUploadImagesHandler(fileSystem, filesUploads, handlerUpfile ->{
-            if(handlerUpfile.succeeded()){
+        fileUploadC.pUploadImagesHandler(fileSystem, filesUploads, handlerUpfile -> {
+            if (handlerUpfile.succeeded()) {
                 body.put("file", handlerUpfile.result());
-                DB.pCreateProduct(body, ar ->{
-                    if(ar.succeeded()){
+                DB.pCreateProduct(body, ar -> {
+                    if (ar.succeeded()) {
                         JsonObject jRes = new JsonObject()
-                        .put("response_code", "000")
-                        .put("status", "400")
-                        .put("message", "Tạo mơi thành công sản phẩm  " + body.getString("prod_name"))
-                        .put("content", new JsonObject());
+                                .put("response_code", "000")
+                                .put("status", "400")
+                                .put("message", "Tạo mơi thành công sản phẩm  " + body.getString("prod_name"))
+                                .put("content", new JsonObject());
                         sendRespone(rc, 200, jRes);
                     }
-                    if(ar.failed()) {
+                    if (ar.failed()) {
                         logger.log(Level.SEVERE, "" + ar.cause().getMessage());
                         rc.fail(ar.cause());
                     }
                 });
             }
-            if(handlerUpfile.failed()){
+            if (handlerUpfile.failed()) {
                 logger.log(Level.SEVERE, "" + handlerUpfile.cause().getMessage());
                 rc.fail(handlerUpfile.cause());
+            }
+        });
+    }
+
+    public void pCreateDonate(RoutingContext rc, String do_id, String user_id, double do_amount, String do_data,
+            String do_state) {
+        DB.pCreateDonate(do_id, user_id, do_amount, do_data, do_state, dbCreate ->{
+            if (dbCreate.succeeded()) {
+                JsonObject jRes = new JsonObject()
+                        .put("response_code", "000")
+                        .put("status", "200")
+                        .put("message", "Tạo thành công giao dịch " + do_id)
+                        .put("content", new JsonObject());
+                sendRespone(rc, 200, jRes);
+            }
+            if (dbCreate.failed()) {
+                logger.log(Level.SEVERE, "" + dbCreate.cause().getMessage());
+                rc.fail(dbCreate.cause());
+            }
+        });
+    }
+    public void pUpdateDonate(RoutingContext rc,String doId,String doData,String doState) {
+        DB.pUpdateDonate(doId, doData,doState, dbUpdate ->{
+            if (dbUpdate.succeeded()) {
+                JsonObject jRes = new JsonObject()
+                        .put("response_code", "000")
+                        .put("status", "200")
+                        .put("message", "Update thành công giao dịch " + doId)
+                        .put("content", new JsonObject());
+                sendRespone(rc, 200, jRes);
+            }
+            if (dbUpdate.failed()) {
+                logger.log(Level.SEVERE, "" + dbUpdate.cause().getMessage());
+                rc.fail(dbUpdate.cause());
             }
         });
     }

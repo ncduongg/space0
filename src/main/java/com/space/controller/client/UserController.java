@@ -26,6 +26,7 @@ public class UserController {
             jUser.put("name", user.getName());
             jUser.put("phone", user.getPhone());
             jUser.put("email", user.getEmail());
+            jUser.put("amount",user.getAmount());
             jResponse.put("message", "Success").put("response_code", "000").put("content", jUser);
             sendRespone(rc, 200, jResponse);
         }).onFailure(rc::fail);

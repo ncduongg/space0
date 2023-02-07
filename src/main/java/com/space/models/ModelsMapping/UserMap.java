@@ -15,6 +15,7 @@ public class UserMap {
             user.setPhone(userItem.getString("phone"));
             user.setEmail(userItem.getString("email"));
             user.setAddress(userItem.getString("address"));
+            user.setAmount(userItem.getDouble("amount"));
         });
         return user;
     }
